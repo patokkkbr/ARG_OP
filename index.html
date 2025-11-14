@@ -22,11 +22,14 @@
   }
 }
 </script>
+<!-- Add Babel Standalone for in-browser TSX/JSX transpilation -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <link rel="stylesheet" href="/index.css">
 </head>
   <body class="bg-black">
     <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
+    <!-- Update script type to be handled by Babel -->
+    <script type="text/babel" data-type="module" src="./index.tsx"></script>
   <script type="module" src="/index.tsx"></script>
 </body>
 </html>
