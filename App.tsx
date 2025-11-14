@@ -50,15 +50,87 @@ const getInitialMuteState = (): boolean => {
     }
 };
 
+const OpeningAnimation: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
+  const [phase, setPhase] = useState<'fadeIn' | 'glitching' | 'idle' | 'fadeOut'>('fadeIn');
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const finishCalled = useRef(false);
+  const glitchTimerId = useRef<number | null>(null);
+  const idleTimerId = useRef<number | null>(null);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.volume = 0.4;
+      audio.play().catch(e => console.warn("Opening audio failed due to autoplay policy", e));
+    }
+    
+    glitchTimerId.current = window.setTimeout(() => setPhase('glitching'), 2500);
+    idleTimerId.current = window.setTimeout(() => setPhase('idle'), 4500);
+
+    return () => {
+      if (glitchTimerId.current) clearTimeout(glitchTimerId.current);
+      if (idleTimerId.current) clearTimeout(idleTimerId.current);
+    };
+  }, []);
+
+  const handleStart = () => {
+    if (['fadeIn', 'glitching', 'idle'].includes(phase) && !finishCalled.current) {
+      finishCalled.current = true;
+      if (glitchTimerId.current) clearTimeout(glitchTimerId.current);
+      if (idleTimerId.current) clearTimeout(idleTimerId.current);
+      setPhase('fadeOut');
+      setTimeout(onFinish, 1500);
+    }
+  };
+
+  const getContainerClass = () => {
+    switch(phase) {
+      case 'fadeIn': return 'animate-[opening-fade-in_2.5s_ease-in-out]';
+      case 'fadeOut': return 'animate-[opening-fade-out_1.5s_ease-in-out_forwards]';
+      default: return 'opacity-100';
+    }
+  };
+
+  const getLogoClass = () => {
+    if (phase === 'glitching') {
+      return 'animate-[opening-logo-glitch_2s_ease-in-out]';
+    }
+    if (phase === 'idle') {
+      return 'animate-[subtle-glitch-loop_3s_linear_infinite]';
+    }
+    return '';
+  };
+
+  return (
+    <div 
+      className={`fixed inset-0 bg-black flex flex-col items-center justify-center z-50 ${getContainerClass()} ${['fadeIn', 'glitching', 'idle'].includes(phase) ? 'cursor-pointer' : ''}`}
+      onClick={handleStart}
+    >
+      <img
+        src="https://files.catbox.moe/yzw32m.svg"
+        alt="Ordo Realitas Logo"
+        className={`w-48 h-48 invert transition-opacity duration-1000 ${getLogoClass()}`}
+      />
+      {['fadeIn', 'glitching', 'idle'].includes(phase) && (
+         <p className="text-red-700 text-2xl tracking-widest mt-12 animate-[text-fade-in_2.5s_ease-out,pulse-text_2.5s_infinite_2.5s]">
+          TOQUE PARA INICIAR
+        </p>
+      )}
+      <audio ref={audioRef} src="https://files.catbox.moe/s7694z.mp3" preload="auto" />
+    </div>
+  );
+};
+
 interface EnigmaImageProps {
   src: string;
   alt: string;
   downloadName: string;
+  onLoad?: () => void;
 }
 
-const EnigmaImage: React.FC<EnigmaImageProps> = ({ src, alt, downloadName }) => (
+const EnigmaImage: React.FC<EnigmaImageProps> = ({ src, alt, downloadName, onLoad }) => (
   <div className="relative">
-    <img src={src} alt={alt} className="max-w-xs md:max-w-sm w-full object-contain shadow-lg shadow-red-900/50" />
+    <img src={src} alt={alt} className="max-w-xs md:max-w-sm w-full object-contain shadow-lg shadow-red-900/50" onLoad={onLoad} />
     <a
       href={src}
       download={downloadName}
@@ -75,14 +147,18 @@ const EnigmaImage: React.FC<EnigmaImageProps> = ({ src, alt, downloadName }) => 
   </div>
 );
 
-const DragPuzzle: React.FC<{ onSolve: () => void }> = ({ onSolve }) => {
-    const INITIAL_WORDS = useRef(['CONHECIMENTO', 'CONQUISTAR', 'BUSQUE'].sort(() => Math.random() - 0.5)).current;
+const DragPuzzle: React.FC<{ onSolve: () => void, onReady: () => void }> = ({ onSolve, onReady }) => {
+    const INITIAL_WORDS = useRef(['CONHECIMENTO', 'CONQUISTAR', 'BUSQUE']).current;
     const CORRECT_SEQUENCE = 'BUSQUE CONQUISTAR CONHECIMENTO';
 
     const [draggableWords, setDraggableWords] = useState<string[]>(INITIAL_WORDS);
     const [droppedWords, setDroppedWords] = useState<Array<string | null>>([null, null, null]);
     const [error, setError] = useState<string | null>(null);
     const [selectedWord, setSelectedWord] = useState<string | null>(null);
+    
+    useEffect(() => {
+        onReady();
+    }, [onReady]);
 
     const checkSequence = (sequence: Array<string | null>) => {
         if (sequence.every(word => word !== null)) {
@@ -203,7 +279,7 @@ const DragPuzzle: React.FC<{ onSolve: () => void }> = ({ onSolve }) => {
     );
 };
 
-const FinalCard: React.FC = () => {
+const FinalCard: React.FC<{onReady: () => void}> = ({ onReady }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const ROTATION_FACTOR = 10;
   const cardImageUrl = "https://i.ibb.co/7c44QNh/Cart-o-Final.jpg";
@@ -236,7 +312,6 @@ const FinalCard: React.FC = () => {
       
       hasGyro = true;
       
-      // Capture initial orientation on first event
       if (initialOrientation.current.beta === null) {
         initialOrientation.current.beta = beta;
       }
@@ -244,11 +319,9 @@ const FinalCard: React.FC = () => {
         initialOrientation.current.gamma = gamma;
       }
 
-      // Calculate relative movement from initial orientation
       const relativeBeta = beta - (initialOrientation.current.beta || 0);
       const relativeGamma = gamma - (initialOrientation.current.gamma || 0);
       
-      // Invert both for mirrored effect
       const rotateY = Math.max(-20, Math.min(20, -(relativeGamma * 0.5))); 
       const rotateX = Math.max(-20, Math.min(20, -(relativeBeta * 0.5)));
 
@@ -287,6 +360,7 @@ const FinalCard: React.FC = () => {
         src={cardImageUrl}
         alt="Cartão Final - Ordo Realitas"
         className="w-full h-full object-cover rounded-lg shadow-2xl shadow-red-900/60 pointer-events-none"
+        onLoad={onReady}
       />
        <a
         href={cardImageUrl}
@@ -305,6 +379,37 @@ const FinalCard: React.FC = () => {
   );
 };
 
+const FinalErrorScreen: React.FC = () => {
+    const [text, setText] = useState('');
+    const fullText = `CONEXÃO INTERROMPIDA...\nPÂNICO DE KERNEL INESPERADO EM 0x00...01E\n...SINAL PERDIDO...\n \nRECUPERANDO FRAGMENTO DE DADOS:\n> CONTACTE RAFAEL M. -> 45.79.147.21
+`;
+
+    useEffect(() => {
+        let index = 0;
+        const typingInterval = setInterval(() => {
+            if (index < fullText.length) {
+                setText(currentText => currentText + fullText[index]);
+                index++;
+            } else {
+                clearInterval(typingInterval);
+            }
+        }, 30);
+
+        return () => clearInterval(typingInterval);
+    }, []);
+
+    const isComplete = text.length === fullText.length;
+
+    return (
+        <div className="bg-black p-4 sm:p-6 rounded-md shadow-lg shadow-emerald-500/20 w-full max-w-3xl border border-emerald-900">
+            <pre className={`text-emerald-400 terminal-text text-sm sm:text-base md:text-lg whitespace-pre-wrap ${isComplete ? 'caret' : ''}`}>
+                {text}
+                {!isComplete && <span className="animate-ping">_</span>}
+            </pre>
+        </div>
+    );
+};
+
 
 const App: React.FC = () => {
   const [stage, setStage] = useState<GameStage>(getInitialStage());
@@ -312,8 +417,11 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [content, setContent] = useState<StageContent | null>(null);
-  const [hasInteracted, setHasInteracted] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(getInitialMuteState());
+  const [hasInteracted, setHasInteracted] = useState<boolean>(false);
+  const [isGlitching, setIsGlitching] = useState<boolean>(false);
+  const [showFinalError, setShowFinalError] = useState<boolean>(false);
+  const [showOpening, setShowOpening] = useState<boolean>(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -341,50 +449,93 @@ const App: React.FC = () => {
     }
   }, [isMuted]);
 
+  // Handle first user interaction to enable audio playback
   useEffect(() => {
-    const handleFirstInteraction = () => {
-      if (!hasInteracted) {
+    if (hasInteracted) return;
+
+    const unlockAudio = () => {
         setHasInteracted(true);
-      }
+        window.removeEventListener('click', unlockAudio);
+        window.removeEventListener('touchstart', unlockAudio);
+        window.removeEventListener('keydown', unlockAudio);
     };
 
-    window.addEventListener('click', handleFirstInteraction, { once: true });
-    window.addEventListener('keydown', handleFirstInteraction, { once: true });
+    window.addEventListener('click', unlockAudio);
+    window.addEventListener('touchstart', unlockAudio);
+    window.addEventListener('keydown', unlockAudio);
 
     return () => {
-      window.removeEventListener('click', handleFirstInteraction);
-      window.removeEventListener('keydown', handleFirstInteraction);
+        window.removeEventListener('click', unlockAudio);
+        window.removeEventListener('touchstart', unlockAudio);
+        window.removeEventListener('keydown', unlockAudio);
     };
   }, [hasInteracted]);
 
-  useEffect(() => {
+
+  const playCurrentTrack = () => {
     const audioEl = audioRef.current;
     if (!audioEl) return;
-
+    
     audioEl.volume = 0.3;
     audioEl.muted = isMuted;
 
     const musicSrc = STAGE_MUSIC[stage];
 
-    if (musicSrc) {
-      if (audioEl.src !== musicSrc) {
+    if (!musicSrc) {
+        audioEl.pause();
+        audioEl.src = '';
+        return;
+    }
+
+    const attemptPlay = () => {
+        if (!isMuted && audioEl.src) {
+            const playPromise = audioEl.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    if (error.name !== 'AbortError') {
+                        console.warn("A reprodução de áudio foi bloqueada pelo navegador.", error);
+                    }
+                });
+            }
+        } else {
+            audioEl.pause();
+        }
+    };
+    
+    if (audioEl.src !== musicSrc) {
         audioEl.src = musicSrc;
         audioEl.load();
-      }
-      if (hasInteracted && audioEl.paused) {
-        const playPromise = audioEl.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(error => {
-            console.warn("A reprodução de áudio foi bloqueada pelo navegador.", error);
-          });
-        }
-      }
+        const onCanPlay = () => {
+            attemptPlay();
+            audioEl.removeEventListener('canplaythrough', onCanPlay);
+        };
+        audioEl.addEventListener('canplaythrough', onCanPlay);
     } else {
-      audioEl.pause();
-      audioEl.src = '';
+        attemptPlay();
     }
-  }, [stage, hasInteracted, isMuted]);
+  };
 
+  useEffect(() => {
+    if (hasInteracted) {
+      playCurrentTrack();
+    }
+  }, [stage, isMuted, hasInteracted]);
+
+  useEffect(() => {
+    if (stage === GameStage.FINAL_CARD && !showFinalError) {
+      const errorTimer = setTimeout(() => {
+        setIsGlitching(true);
+        const showTimer = setTimeout(() => {
+          setShowFinalError(true);
+          setIsGlitching(false);
+        }, 1500); // Glitch for 1.5 seconds
+
+        return () => clearTimeout(showTimer);
+      }, 90000); // 1.5 minutes delay before glitch starts
+
+      return () => clearTimeout(errorTimer);
+    }
+  }, [stage, showFinalError]);
 
   useEffect(() => {
     const generateContent = () => {
@@ -394,7 +545,7 @@ const App: React.FC = () => {
             key: 'start',
             element: (
               <div className="flex flex-col items-center gap-6">
-                <EnigmaImage src="https://i.ibb.co/8gwtDkXc/Primeiro-Sinal.jpg" alt="Primeiro Sinal" downloadName="Primeiro-Sinal.jpg" />
+                <EnigmaImage src="https://i.ibb.co/8gwtDkXc/Primeiro-Sinal.jpg" alt="Primeiro Sinal" downloadName="Primeiro-Sinal.jpg" onLoad={playCurrentTrack} />
                 <p className="text-center text-lg">{STAGES_DATA[GameStage.START].prompt}</p>
               </div>
             ),
@@ -404,7 +555,7 @@ const App: React.FC = () => {
             key: 'knowledge',
             element: (
               <div className="flex flex-col items-center gap-6">
-                <EnigmaImage src="https://i.ibb.co/wrPYnq94/Segundo-Sinal.jpg" alt="Segundo Sinal" downloadName="Segundo-Sinal.jpg" />
+                <EnigmaImage src="https://i.ibb.co/wrPYnq94/Segundo-Sinal.jpg" alt="Segundo Sinal" downloadName="Segundo-Sinal.jpg" onLoad={playCurrentTrack} />
                 <p className="text-center text-lg">{STAGES_DATA[GameStage.KNOWLEDGE].prompt}</p>
               </div>
             ),
@@ -414,7 +565,7 @@ const App: React.FC = () => {
             key: 'conquer',
             element: (
               <div className="flex flex-col items-center gap-6">
-                 <EnigmaImage src="https://i.ibb.co/Y448pdsD/Terceiro-Sinal.jpg" alt="Terceiro Sinal" downloadName="Terceiro-Sinal.jpg" />
+                 <EnigmaImage src="https://i.ibb.co/Y448pdsD/Terceiro-Sinal.jpg" alt="Terceiro Sinal" downloadName="Terceiro-Sinal.jpg" onLoad={playCurrentTrack} />
                 <p className="text-center text-lg">{STAGES_DATA[GameStage.CONQUER].prompt}</p>
               </div>
             ),
@@ -422,7 +573,7 @@ const App: React.FC = () => {
         case GameStage.DRAG_PUZZLE:
            return {
             key: 'drag_puzzle',
-            element: <DragPuzzle onSolve={() => setStage(GameStage.FINAL_CARD)} />,
+            element: <DragPuzzle onSolve={() => setStage(GameStage.FINAL_CARD)} onReady={playCurrentTrack} />,
           };
         case GameStage.FINAL_CARD:
            return {
@@ -430,7 +581,7 @@ const App: React.FC = () => {
             element: (
                 <div className="flex flex-col items-center gap-8">
                     <p className="text-center text-xl font-bold">{STAGES_DATA[GameStage.FINAL_CARD].prompt}</p>
-                    <FinalCard />
+                    <FinalCard onReady={playCurrentTrack}/>
                 </div>
             ),
           };
@@ -452,10 +603,6 @@ const App: React.FC = () => {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (isLoading || stage >= GameStage.DRAG_PUZZLE) return;
-    
-    if (!hasInteracted) {
-        setHasInteracted(true);
-    }
 
     const formattedInput = inputValue.trim().toUpperCase();
 
@@ -481,23 +628,37 @@ const App: React.FC = () => {
     setInputValue('');
   };
 
+  if (showOpening) {
+    return <OpeningAnimation onFinish={() => {
+      setShowOpening(false);
+      setHasInteracted(true);
+    }} />;
+  }
+
   return (
-    <div className="bg-black text-red-700 min-h-screen w-full flex flex-col items-center justify-between p-4 sm:p-8 selection:bg-red-900 selection:text-white relative">
+    <div className={`bg-black text-red-700 min-h-screen w-full flex flex-col items-center justify-between p-4 sm:p-8 selection:bg-red-900 selection:text-white relative ${isGlitching ? 'glitch-effect' : ''}`}>
+        
       {stage < GameStage.DRAG_PUZZLE && (
         <header className="w-full text-center py-4">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-widest">Registros do Outro Lado</h1>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-widest">O Enigma do Outro Lado</h1>
         </header>
       )}
 
-      <main className="flex-grow flex flex-col items-center justify-center w-full max-w-2xl px-4">
-        <div className={`transition-opacity duration-1000 ease-in-out w-full flex justify-center ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
-          {content?.element}
-        </div>
-        
-        {error && (
-            <div className={`text-center text-lg mt-6 animate-pulse ${stage === GameStage.DRAG_PUZZLE ? 'text-yellow-500' : 'text-red-700'}`}>
-                <p>{error}</p>
+      <main className="flex-grow flex flex-col items-center justify-center w-full max-w-3xl px-4">
+        {showFinalError && stage === GameStage.FINAL_CARD ? (
+          <FinalErrorScreen />
+        ) : (
+          <>
+            <div className={`transition-opacity duration-1000 ease-in-out w-full flex justify-center ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
+              {content?.element}
             </div>
+            
+            {error && (
+                <div className={`text-center text-lg mt-6 animate-pulse ${stage === GameStage.DRAG_PUZZLE ? 'text-yellow-500' : 'text-red-700'}`}>
+                    <p>{error}</p>
+                </div>
+            )}
+          </>
         )}
       </main>
 
@@ -535,12 +696,12 @@ const App: React.FC = () => {
       >
         {isMuted ? (
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clipRule="evenodd" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17 14l-2-2m0 0l-2-2m2 2l2-2m-2 2l-2 2" />
+            {/* FIX: Replaced corrupted SVG path data and completed the component structure. */}
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
           </svg>
         ) : (
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
           </svg>
         )}
       </button>
@@ -548,4 +709,5 @@ const App: React.FC = () => {
   );
 };
 
+// FIX: Added default export to fix module import error.
 export default App;
