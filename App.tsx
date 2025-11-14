@@ -640,7 +640,7 @@ const App: React.FC = () => {
         
       {stage < GameStage.DRAG_PUZZLE && (
         <header className="w-full text-center py-4">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-widest">O Enigma do Outro Lado</h1>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-widest">Registros do Outro Lado</h1>
         </header>
       )}
 
