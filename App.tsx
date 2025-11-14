@@ -50,7 +50,7 @@ const getInitialMuteState = (): boolean => {
     }
 };
 
-const OpeningAnimation: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
+const OpeningAnimation: React.FC<{ onFinish: () => void, currentStage: GameStage }> = ({ onFinish, currentStage }) => {
   const [phase, setPhase] = useState<'fadeIn' | 'glitching' | 'idle' | 'fadeOut'>('fadeIn');
   const audioRef = useRef<HTMLAudioElement>(null);
   const finishCalled = useRef(false);
@@ -112,8 +112,8 @@ const OpeningAnimation: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
         className={`w-48 h-48 invert transition-opacity duration-1000 ${getLogoClass()}`}
       />
       {['fadeIn', 'glitching', 'idle'].includes(phase) && (
-         <p className="text-red-700 text-2xl tracking-widest mt-12 animate-[text-fade-in_2.5s_ease-out,pulse-text_2.5s_infinite_2.5s]">
-          TOQUE PARA INICIAR
+         <p className="text-white text-2xl tracking-widest mt-12 animate-[text-fade-in_2.5s_ease-out,pulse-text_2.5s_infinite_2.5s]">
+          {currentStage === GameStage.START ? 'TOQUE PARA INICIAR' : 'TOQUE PARA CONTINUAR'}
         </p>
       )}
       <audio ref={audioRef} src="https://files.catbox.moe/s7694z.mp3" preload="auto" />
@@ -632,7 +632,7 @@ const App: React.FC = () => {
     return <OpeningAnimation onFinish={() => {
       setShowOpening(false);
       setHasInteracted(true);
-    }} />;
+    }} currentStage={stage} />;
   }
 
   return (
