@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Registros do Outro Lado</title>
+    <title>Registros Outro Lado</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,6 +11,20 @@
     <style>
       body {
         font-family: 'Cinzel', serif;
+        /* Add subtle grain background */
+        background-color: #000;
+      }
+      body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4XiDAAAAUVBMVEWFhYWDg4N3d3dtbW17e3t1dXVpaWl9fX1ZWVkICAgJCQkKCgpFRUVERERQUFBOTk5SUlJwcHBGhoaHh4d/f39nZ2dmZmZVVVVDQ0Nvb29BQUFLS0t8fX1O//8AAAAPX3EFAAAASklEQVR42uzBAQEAAAAAgD1/1C16gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALwA2n8AAE62TnaAAAAAElFTkSuQmCC');
+        opacity: 0.04;
+        pointer-events: none;
+        z-index: 9999;
       }
       @keyframes glitch-move {
         0%, 100% { transform: translate(0, 0); opacity: 1; }
@@ -28,13 +42,22 @@
         animation: glitch-move 0.1s linear infinite;
         filter: invert(1) hue-rotate(180deg);
       }
+      
+      /* Remastered Text Glows */
+      .text-glow-red {
+        text-shadow: 0 0 5px rgba(220, 38, 38, 0.6), 0 0 10px rgba(220, 38, 38, 0.4);
+      }
+      .text-glow-yellow {
+        text-shadow: 0 0 5px rgba(250, 204, 21, 0.6), 0 0 10px rgba(250, 204, 21, 0.4);
+      }
+
       /* Terminal styles */
       @keyframes flicker {
         0%, 18%, 22%, 25%, 53%, 57%, 100% {
           text-shadow:
             0 0 4px #34d399,
             0 0 11px #34d399,
-            0 0 19px #34d399,
+            0 0 19px #059669,
             0 0 40px #059669,
             0 0 80px #059669;
           opacity: 1;
@@ -59,6 +82,98 @@
           margin-left: 2px;
           animation: blink-caret 1s step-end infinite;
       }
+
+      /* CRT Scanline Effect */
+      @keyframes scanline-flicker {
+        0% { opacity: 0.1; }
+        5% { opacity: 0.2; }
+        10% { opacity: 0.15; }
+        20% { opacity: 0.3; }
+        100% { opacity: 0.2; }
+      }
+      .scanline-overlay::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: repeating-linear-gradient(
+              0deg,
+              transparent,
+              transparent 2px,
+              rgba(0,0,0,0.5) 2px,
+              rgba(0,0,0,0.5) 3px
+          );
+          z-index: 1;
+          pointer-events: none;
+          animation: scanline-flicker 10s linear infinite;
+      }
+
+      /* Remastered UI Elements */
+      .input-cyber {
+          position: relative;
+          padding: 0.5rem 1rem;
+          background-color: rgba(127, 29, 29, 0.1);
+      }
+      .input-cyber::before,
+      .input-cyber::after {
+          content: '';
+          position: absolute;
+          width: 10px;
+          height: 10px;
+          transition: all 0.3s ease;
+      }
+      .input-cyber::before {
+          top: 0;
+          left: 0;
+          border-top: 1px solid #7f1d1d; /* red-900 */
+          border-left: 1px solid #7f1d1d;
+      }
+      .input-cyber::after {
+          bottom: 0;
+          right: 0;
+          border-bottom: 1px solid #7f1d1d; /* red-900 */
+          border-right: 1px solid #7f1d1d;
+      }
+      .input-cyber:focus-within::before,
+      .input-cyber:focus-within::after {
+          border-color: #ef4444; /* red-500 */
+          width: 100%;
+          height: 100%;
+      }
+      .btn-cyber {
+          position: relative;
+          z-index: 1;
+      }
+      .btn-cyber::before,
+      .btn-cyber::after {
+          content: '';
+          position: absolute;
+          width: 20px;
+          height: 20px;
+          transition: all 0.3s ease;
+          z-index: -1;
+      }
+      .btn-cyber::before {
+          top: -5px;
+          left: -5px;
+          border-top: 2px solid #991b1b; /* red-800 */
+          border-left: 2px solid #991b1b;
+      }
+      .btn-cyber::after {
+          bottom: -5px;
+          right: -5px;
+          border-bottom: 2px solid #991b1b; /* red-800 */
+          border-right: 2px solid #991b1b;
+      }
+      .btn-cyber:hover:not(:disabled)::before,
+      .btn-cyber:hover:not(:disabled)::after {
+          width: calc(100% + 10px);
+          height: calc(100% + 10px);
+          border-color: #ef4444; /* red-500 */
+      }
+
       /* Opening Animation */
       @keyframes opening-fade-in {
         from { opacity: 0; }
@@ -79,8 +194,8 @@
       }
       @keyframes pulse-text {
         50% {
-          opacity: 0.7;
-          text-shadow: 0 0 10px #ffffff;
+          opacity: 0.8;
+          text-shadow: 0 0 8px #fff, 0 0 15px #fff, 0 0 25px #b91c1c;
         }
       }
       @keyframes text-fade-in {

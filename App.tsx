@@ -138,7 +138,7 @@ const EnigmaImage: React.FC<EnigmaImageProps> = ({ src, alt, downloadName, onLoa
       rel="noopener noreferrer"
       aria-label="Fazer download da imagem"
       title="Fazer Download"
-      className="absolute top-2 right-2 p-2 bg-black bg-opacity-50 rounded-full text-red-700 hover:bg-opacity-75 hover:text-red-500 transition-colors z-10"
+      className="absolute top-2 right-2 p-2 bg-black/75 border border-red-900 text-red-700 hover:bg-red-900/50 hover:text-red-500 hover:border-red-700 transition-all z-10"
     >
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -150,6 +150,7 @@ const EnigmaImage: React.FC<EnigmaImageProps> = ({ src, alt, downloadName, onLoa
 const DragPuzzle: React.FC<{ onSolve: () => void, onReady: () => void }> = ({ onSolve, onReady }) => {
     const INITIAL_WORDS = useRef(['CONHECIMENTO', 'CONQUISTAR', 'BUSQUE']).current;
     const CORRECT_SEQUENCE = 'BUSQUE CONQUISTAR CONHECIMENTO';
+    const DRAG_OVER_CLASS = 'bg-yellow-900/40 border-yellow-500 shadow-[0_0_15px_rgba(250,204,21,0.5)]';
 
     const [draggableWords, setDraggableWords] = useState<string[]>(INITIAL_WORDS);
     const [droppedWords, setDroppedWords] = useState<Array<string | null>>([null, null, null]);
@@ -188,16 +189,16 @@ const DragPuzzle: React.FC<{ onSolve: () => void, onReady: () => void }> = ({ on
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
-        e.currentTarget.classList.add('bg-yellow-500/20');
+        e.currentTarget.classList.add(...DRAG_OVER_CLASS.split(' '));
     };
     
     const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-        e.currentTarget.classList.remove('bg-yellow-500/20');
+        e.currentTarget.classList.remove(...DRAG_OVER_CLASS.split(' '));
     };
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>, slotIndex: number) => {
         e.preventDefault();
-        e.currentTarget.classList.remove('bg-yellow-500/20');
+        e.currentTarget.classList.remove(...DRAG_OVER_CLASS.split(' '));
         const word = e.dataTransfer.getData("text/plain");
 
         if (!draggableWords.includes(word) || droppedWords[slotIndex] !== null) return;
@@ -239,7 +240,7 @@ const DragPuzzle: React.FC<{ onSolve: () => void, onReady: () => void }> = ({ on
 
     return (
         <div className="flex flex-col items-center gap-8 w-full text-yellow-400">
-            <p className="text-center text-lg">Revele a frase oculta nas centelhas de conhecimento que já lhe foram dadas.</p>
+            <p className="text-center text-lg text-glow-yellow">Revele a frase oculta nas centelhas de conhecimento que já lhe foram dadas.</p>
             
             <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
                 {droppedWords.map((word, index) => (
@@ -249,7 +250,7 @@ const DragPuzzle: React.FC<{ onSolve: () => void, onReady: () => void }> = ({ on
                         onDragLeave={handleDragLeave}
                         onDrop={(e) => handleDrop(e, index)}
                         onClick={() => handleSlotClick(index)}
-                        className={`w-full sm:w-1/3 h-16 border-2 border-dashed border-yellow-700 flex items-center justify-center text-yellow-300 text-lg font-bold tracking-widest transition-all duration-200 ${(word || selectedWord) ? 'cursor-pointer' : ''}`}
+                        className={`w-full sm:w-1/3 h-16 border-2 border-solid border-yellow-700/50 bg-black/20 flex items-center justify-center text-yellow-300 text-lg font-bold tracking-widest transition-all duration-200 ${(word || selectedWord) ? 'cursor-pointer' : ''}`}
                     >
                         {word}
                     </div>
@@ -264,14 +265,14 @@ const DragPuzzle: React.FC<{ onSolve: () => void, onReady: () => void }> = ({ on
                         onDragStart={(e) => handleDragStart(e, word)}
                         onDragEnd={handleDragEnd}
                         onClick={() => handleWordClick(word)}
-                        className={`w-full sm:w-1/3 h-16 border-2 bg-black flex items-center justify-center text-yellow-500 text-lg font-bold tracking-widest cursor-pointer md:cursor-grab active:cursor-grabbing transition-all duration-200 ${selectedWord === word ? 'border-yellow-300 scale-105 shadow-lg shadow-yellow-500/30' : 'border-yellow-600'}`}
+                        className={`w-full sm:w-1/3 h-16 border-2 bg-black flex items-center justify-center text-yellow-500 text-lg font-bold tracking-widest cursor-pointer md:cursor-grab active:cursor-grabbing transition-all duration-200 text-glow-yellow ${selectedWord === word ? 'border-yellow-300 scale-105 shadow-lg shadow-yellow-500/30' : 'border-yellow-600'}`}
                     >
                         {word}
                     </div>
                  ))}
             </div>
              {error && (
-                <div className="text-center text-lg mt-2 text-yellow-500 animate-pulse">
+                <div className="text-center text-lg mt-2 text-yellow-500 animate-pulse text-glow-yellow">
                     <p>{error}</p>
                 </div>
             )}
@@ -359,7 +360,7 @@ const FinalCard: React.FC<{onReady: () => void}> = ({ onReady }) => {
       <img
         src={cardImageUrl}
         alt="Cartão Final - Ordo Realitas"
-        className="w-full h-full object-cover rounded-lg shadow-2xl shadow-red-900/60 pointer-events-none"
+        className="w-full h-full object-cover rounded-lg shadow-2xl shadow-red-800/80 pointer-events-none"
         onLoad={onReady}
       />
        <a
@@ -369,7 +370,7 @@ const FinalCard: React.FC<{onReady: () => void}> = ({ onReady }) => {
         rel="noopener noreferrer"
         aria-label="Fazer download da imagem"
         title="Fazer Download"
-        className="absolute top-2 right-2 p-2 bg-black bg-opacity-50 rounded-full text-red-700 hover:bg-opacity-75 hover:text-red-500 transition-colors z-10"
+        className="absolute top-2 right-2 p-2 bg-black/75 border border-red-900 text-red-700 hover:bg-red-900/50 hover:text-red-500 hover:border-red-700 transition-all z-10"
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -401,7 +402,7 @@ const FinalErrorScreen: React.FC = () => {
     const isComplete = text.length === fullText.length;
 
     return (
-        <div className="bg-black p-4 sm:p-6 rounded-md shadow-lg shadow-emerald-500/20 w-full max-w-3xl border border-emerald-900">
+        <div className="bg-black p-4 sm:p-6 rounded-md shadow-lg shadow-emerald-500/20 w-full max-w-3xl border border-emerald-900 relative overflow-hidden scanline-overlay">
             <pre className={`text-emerald-400 terminal-text text-sm sm:text-base md:text-lg whitespace-pre-wrap ${isComplete ? 'caret' : ''}`}>
                 {text}
                 {!isComplete && <span className="animate-ping">_</span>}
@@ -546,7 +547,7 @@ const App: React.FC = () => {
             element: (
               <div className="flex flex-col items-center gap-6">
                 <EnigmaImage src="https://i.ibb.co/8gwtDkXc/Primeiro-Sinal.jpg" alt="Primeiro Sinal" downloadName="Primeiro-Sinal.jpg" onLoad={playCurrentTrack} />
-                <p className="text-center text-lg">{STAGES_DATA[GameStage.START].prompt}</p>
+                <p className="text-center text-lg text-glow-red">{STAGES_DATA[GameStage.START].prompt}</p>
               </div>
             ),
           };
@@ -556,7 +557,7 @@ const App: React.FC = () => {
             element: (
               <div className="flex flex-col items-center gap-6">
                 <EnigmaImage src="https://i.ibb.co/wrPYnq94/Segundo-Sinal.jpg" alt="Segundo Sinal" downloadName="Segundo-Sinal.jpg" onLoad={playCurrentTrack} />
-                <p className="text-center text-lg">{STAGES_DATA[GameStage.KNOWLEDGE].prompt}</p>
+                <p className="text-center text-lg text-glow-red">{STAGES_DATA[GameStage.KNOWLEDGE].prompt}</p>
               </div>
             ),
           };
@@ -566,7 +567,7 @@ const App: React.FC = () => {
             element: (
               <div className="flex flex-col items-center gap-6">
                  <EnigmaImage src="https://i.ibb.co/Y448pdsD/Terceiro-Sinal.jpg" alt="Terceiro Sinal" downloadName="Terceiro-Sinal.jpg" onLoad={playCurrentTrack} />
-                <p className="text-center text-lg">{STAGES_DATA[GameStage.CONQUER].prompt}</p>
+                <p className="text-center text-lg text-glow-red">{STAGES_DATA[GameStage.CONQUER].prompt}</p>
               </div>
             ),
           };
@@ -580,7 +581,7 @@ const App: React.FC = () => {
             key: 'final_card',
             element: (
                 <div className="flex flex-col items-center gap-8">
-                    <p className="text-center text-xl font-bold">{STAGES_DATA[GameStage.FINAL_CARD].prompt}</p>
+                    <p className="text-center text-xl font-bold text-glow-red">{STAGES_DATA[GameStage.FINAL_CARD].prompt}</p>
                     <FinalCard onReady={playCurrentTrack}/>
                 </div>
             ),
@@ -640,7 +641,7 @@ const App: React.FC = () => {
         
       {stage < GameStage.DRAG_PUZZLE && (
         <header className="w-full text-center py-4">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-widest">Registros do Outro Lado</h1>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-widest text-glow-red">Registros do Outro Lado</h1>
         </header>
       )}
 
@@ -654,7 +655,7 @@ const App: React.FC = () => {
             </div>
             
             {error && (
-                <div className={`text-center text-lg mt-6 animate-pulse ${stage === GameStage.DRAG_PUZZLE ? 'text-yellow-500' : 'text-red-700'}`}>
+                <div className={`text-center text-lg mt-6 animate-pulse ${stage === GameStage.DRAG_PUZZLE ? 'text-yellow-500 text-glow-yellow' : 'text-red-700 text-glow-red'}`}>
                     <p>{error}</p>
                 </div>
             )}
@@ -665,22 +666,24 @@ const App: React.FC = () => {
       <footer className="w-full py-4 max-w-lg">
         {stage < GameStage.DRAG_PUZZLE && (
           <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-4 w-full">
-            <input
-              ref={inputRef}
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Digite sua resposta..."
-              disabled={isLoading}
-              className="w-full sm:flex-grow bg-transparent border-b-2 border-red-800 text-red-500 text-center text-lg placeholder-red-900 focus:outline-none focus:border-red-500 focus:placeholder-red-700 transition-all duration-300 py-2"
-              autoComplete="off"
-              autoCapitalize="off"
-              spellCheck="false"
-            />
+            <div className="input-cyber w-full sm:flex-grow">
+              <input
+                ref={inputRef}
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder="Digite sua resposta..."
+                disabled={isLoading}
+                className="w-full bg-transparent text-red-500 text-center text-lg placeholder-red-900 focus:outline-none focus:placeholder-red-700 transition-all duration-300 py-2"
+                autoComplete="off"
+                autoCapitalize="off"
+                spellCheck="false"
+              />
+            </div>
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full sm:w-auto px-10 py-3 bg-transparent border-2 border-red-800 text-red-700 hover:bg-red-800 hover:text-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-red-500 transition-all duration-300 font-bold tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto px-10 py-3 bg-transparent text-red-700 hover:bg-red-800 hover:text-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-red-500 transition-all duration-300 font-bold tracking-widest disabled:opacity-50 disabled:cursor-not-allowed btn-cyber"
             >
               Enviar
             </button>
@@ -690,7 +693,7 @@ const App: React.FC = () => {
       <audio ref={audioRef} loop preload="auto" />
       <button
         onClick={() => setIsMuted(!isMuted)}
-        className="absolute bottom-4 right-4 p-2 text-red-900 hover:text-red-500 transition-colors z-20"
+        className="absolute bottom-4 right-4 p-2 text-red-900 hover:text-red-500 transition-colors z-20 hover:drop-shadow-[0_0_3px_#dc2626]"
         aria-label={isMuted ? "Ativar som" : "Desativar som"}
         title={isMuted ? "Ativar som" : "Desativar som"}
       >
